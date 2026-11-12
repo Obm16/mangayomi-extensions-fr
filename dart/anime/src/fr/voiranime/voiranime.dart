@@ -64,17 +64,23 @@ class VoirAnime extends MProvider {
     return _parseListing(res);
   }
 
-  MPages _parseListing(String res) {
+  List<MManga> parseContainer(String res, String containerClass) {
     List<MManga> animeList = [];
-    final urls = xpath(res, '//div[contains(@class,"page-item-detail")]//h3/a/@href');
-    final names = xpath(res, '//div[contains(@class,"page-item-detail")]//h3/a/text()');
+    final urls = xpath(
+      res,
+      '//div[contains(@class,"$containerClass")]//h3/a/@href',
+    );
+    final names = xpath(
+      res,
+      '//div[contains(@class,"$containerClass")]//h3/a/text()',
+    );
     final images = xpath(
       res,
-      '//div[contains(@class,"page-item-detail")]//img/@data-src',
+      '//div[contains(@class,"$containerClass")]//img/@data-src',
     );
     final imagesAlt = xpath(
       res,
-      '//div[contains(@class,"page-item-detail")]//img/@src',
+      '//div[contains(@class,"$containerClass")]//img/@src',
     );
 
     for (var i = 0; i < names.length; i++) {
@@ -85,6 +91,14 @@ class VoirAnime extends MProvider {
       anime.link = urls[i];
       animeList.add(anime);
     }
+    return animeList;
+  }
+
+  MPages _parseListing(String res) {
+    List<MManga> animeList = [
+      ...parseContainer(res, "page-item-detail"),
+      ...parseContainer(res, "c-tabs-item__content"),
+    ];
     final nextPage = xpath(res, '//a[@class="next page-numbers"]/@href');
     return MPages(animeList, nextPage.isNotEmpty);
   }
@@ -189,9 +203,19 @@ class VoirAnime extends MProvider {
         } else if (lower.contains("dood") &&
             hosterSelection.contains("Doodstream")) {
           a = await doodExtractor(embedUrl);
-        } else if (lower.contains("streamwish") &&
+        } else if ((lower.contains("streamwish") ||
+                lower.contains("streamhide") ||
+                lower.contains("awish") ||
+                lower.contains("swhoi") ||
+                lower.contains("mulwish")) &&
             hosterSelection.contains("Streamwish")) {
           a = await streamWishExtractor(embedUrl, "StreamWish");
+        } else if (lower.contains("mail.ru") &&
+            hosterSelection.contains("Okru")) {
+          a = await okruExtractor(embedUrl);
+        } else if (lower.contains("yourupload") &&
+            hosterSelection.contains("YourUpload")) {
+          a = await yourUploadExtractor(embedUrl, null, "YourUpload", "");
         }
         videos.addAll(a);
       } catch (_) {}
@@ -215,8 +239,14 @@ class VoirAnime extends MProvider {
 
   List<String> preferenceHosterSelection(int sourceId) {
     final value = getPreferenceValue(sourceId, "hoster_selection_");
-    if (value is List) return value.map((e) => e.toString()).toList();
-    return [];
+    if (value is List) {
+      final selection = value.map((e) => e.toString()).toList();
+      if (selection.isNotEmpty) return selection;
+    }
+    return [
+      "Voe", "Filemoon", "Streamtape", "MyTV", "Sibnet", "Doodstream",
+      "Streamwish", "Okru", "YourUpload",
+    ];
   }
 
   List<MVideo> sortVideos(List<MVideo> videos, int sourceId) {
@@ -262,13 +292,16 @@ class VoirAnime extends MProvider {
         title: "Activer/Désactiver les hébergeurs",
         summary: "",
         entries: [
-          "Voe", "Filemoon", "Streamtape", "MyTV", "Sibnet", "Doodstream", "Streamwish",
+          "Voe", "Filemoon", "Streamtape", "MyTV", "Sibnet", "Doodstream",
+          "Streamwish", "Okru", "YourUpload",
         ],
         entryValues: [
-          "Voe", "Filemoon", "Streamtape", "MyTV", "Sibnet", "Doodstream", "Streamwish",
+          "Voe", "Filemoon", "Streamtape", "MyTV", "Sibnet", "Doodstream",
+          "Streamwish", "Okru", "YourUpload",
         ],
         values: [
-          "Voe", "Filemoon", "Streamtape", "MyTV", "Sibnet", "Doodstream", "Streamwish",
+          "Voe", "Filemoon", "Streamtape", "MyTV", "Sibnet", "Doodstream",
+          "Streamwish", "Okru", "YourUpload",
         ],
       ),
     ];

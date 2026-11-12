@@ -24,7 +24,7 @@
   {
     "name": "AnimesUltra",
     "id": 1050779985,
-    "baseUrl": "https://animesultra.org",
+    "baseUrl": "https://animesultra.com",
     "lang": "fr",
     "typeSource": "single",
     "iconUrl": "",
@@ -34,14 +34,14 @@
     "hasCloudflare": false,
     "sourceCodeUrl": "https://raw.githubusercontent.com/Obm16/mangayomi-extensions-fr/main/dart/anime/src/fr/animesultra/animesultra.dart",
     "apiUrl": "",
-    "version": "0.0.5",
+    "version": "0.1.0",
     "isManga": false,
     "itemType": 1,
     "isFullData": false,
     "appMinVerReq": "0.5.0",
     "additionalParams": "",
     "sourceCodeLanguage": 0,
-    "notes": "Depuis m2k3a/mangayomi-extensions (Apache-2.0), domaine à jour animesultra.org"
+    "notes": "Site reconstruit sur animesultra.com : listings, recherche et épisodes via sitemap (la liste AJAX du site est cassée). Beaucoup d'embeds vidstream.pro sont morts côté site"
   },
   {
     "name": "KissKH FR",
@@ -53,17 +53,17 @@
     "dateFormat": "",
     "dateFormatLocale": "fr",
     "isNsfw": false,
-    "hasCloudflare": false,
+    "hasCloudflare": true,
     "sourceCodeUrl": "https://raw.githubusercontent.com/Obm16/mangayomi-extensions-fr/main/dart/anime/src/fr/kisskhfr/kisskhfr.dart",
     "apiUrl": "",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "isManga": false,
     "itemType": 1,
     "isFullData": false,
     "appMinVerReq": "0.5.0",
     "additionalParams": "",
     "sourceCodeLanguage": 0,
-    "notes": "Variante FR de la source KissKH (multilingue, sous-titres FR) — m2k3a/mangayomi-extensions (Apache-2.0)"
+    "notes": "Variante FR de la source KissKH (multilingue, sous-titres FR) — Cloudflare actif sur tous les domaines, l'app doit passer le challenge"
   },
   {
     "name": "Voiranime",
@@ -78,14 +78,14 @@
     "hasCloudflare": false,
     "sourceCodeUrl": "https://raw.githubusercontent.com/Obm16/mangayomi-extensions-fr/main/dart/anime/src/fr/voiranime/voiranime.dart",
     "apiUrl": "",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "isManga": false,
     "itemType": 1,
     "isFullData": false,
     "appMinVerReq": "0.5.0",
     "additionalParams": "",
     "sourceCodeLanguage": 0,
-    "notes": "Nouvelle source — domaine à jour voir-anime.to"
+    "notes": "Hébergeurs streamhide/mail.ru/yourupload ajoutés, résultats de recherche corrigés"
   },
   {
     "name": "TenshiTV",

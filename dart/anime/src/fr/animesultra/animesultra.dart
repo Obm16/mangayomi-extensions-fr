@@ -11,233 +11,257 @@ class AnimesUltra extends MProvider {
   @override
   String get baseUrl => source.baseUrl;
 
+  String absUrl(String href) {
+    if (href.startsWith("http")) return href;
+    var clean = href;
+    while (clean.startsWith("../")) {
+      clean = clean.substring(3);
+    }
+    if (clean.startsWith("/")) clean = clean.substring(1);
+    return "$baseUrl/$clean";
+  }
+
+  bool isAnimeLink(String href) {
+    return RegExp(r"www1-sub/\d+-[^/]+/?$").hasMatch(href);
+  }
+
+  String animeUrlFromLink(String href) {
+    final abs = absUrl(href);
+    return abs.endsWith("/") ? abs.substring(0, abs.length - 1) : abs;
+  }
+
+  String nameFromAnimeUrl(String url) {
+    final slug = url.split("/").last.replaceFirst(RegExp(r"^\d+-"), "");
+    return slug.replaceAll("-", " ").trim();
+  }
+
+  List<MManga> parseListing(String res) {
+    final doc = parseHtml(res);
+    final items = doc.select("div.flw-item");
+    List<MManga> animeList = [];
+    for (var it in items) {
+      final a = it.selectFirst("a.film-poster-ahref");
+      final href = a?.getHref ?? "";
+      final name = a?.attr("title") ?? "";
+      if (href.isEmpty || !isAnimeLink(href)) continue;
+      final img = it.selectFirst("img.film-poster-img")?.attr("data-src") ?? "";
+      MManga anime = MManga();
+      anime.name = name;
+      anime.imageUrl = img.startsWith("http") ? img : "";
+      anime.link = animeUrlFromLink(href);
+      animeList.add(anime);
+    }
+    return animeList;
+  }
+
+  List<MManga> dedupe(List<MManga> list) {
+    final seen = <String>{};
+    List<MManga> result = [];
+    for (var it in list) {
+      if (it.link.isEmpty) continue;
+      if (seen.add(it.link)) result.add(it);
+    }
+    return result;
+  }
+
+  Future<List<String>> sitemapUrls() async {
+    final res = (await client.get(Uri.parse("$baseUrl/sitemap.xml"))).body;
+    final matches = RegExp(r"<loc>([^<]+)</loc>").allMatches(res);
+    List<String> urls = [];
+    for (var m in matches) {
+      final url = m.group(1) ?? "";
+      if (RegExp(r"/www1-sub/\d+-[^/]+(/episode-\d+)?/?$").hasMatch(url)) {
+        urls.add(url);
+      }
+    }
+    return urls;
+  }
+
+  Future<List<String>> sitemapAnimeUrls() async {
+    final urls = await sitemapUrls();
+    return urls.where((u) => !u.contains("/episode-")).toList();
+  }
+
+  // ============================== Popular ===============================
   @override
   Future<MPages> getPopular(int page) async {
-    final res = (await client.get(Uri.parse(baseUrl))).body;
-
-    List<MManga> animeList = [];
-    final urls = xpath(
-      res,
-      '//*[contains(@class,"swiper-slide item-qtip")]/div[@class="item"]/a/@href',
-    );
-    final names = xpath(
-      res,
-      '//*[contains(@class,"swiper-slide item-qtip")]/div[@class="item"]/a/img/@title',
-    );
-    final images = xpath(
-      res,
-      '//*[contains(@class,"swiper-slide item-qtip")]/div[@class="item"]/a/img/@data-src',
-    );
-
-    for (var i = 0; i < names.length; i++) {
-      MManga anime = MManga();
-      anime.name = names[i];
-      anime.imageUrl = images[i];
-      anime.link = urls[i];
-      animeList.add(anime);
-    }
-
+    final resSub = (await client.get(Uri.parse("$baseUrl/anime-vostfr/"))).body;
+    final resDub = (await client.get(Uri.parse("$baseUrl/anime-vf/"))).body;
+    List<MManga> animeList = dedupe([
+      ...parseListing(resSub),
+      ...parseListing(resDub),
+    ]);
+    final known = animeList.map((e) => e.link).toSet();
+    try {
+      final urls = await sitemapAnimeUrls();
+      for (var url in urls) {
+        final clean = animeUrlFromLink(url);
+        if (known.contains(clean)) continue;
+        MManga anime = MManga();
+        anime.name = nameFromAnimeUrl(clean);
+        anime.link = clean;
+        animeList.add(anime);
+      }
+    } catch (_) {}
     return MPages(animeList, false);
   }
 
+  // =============================== Latest ===============================
   @override
   Future<MPages> getLatestUpdates(int page) async {
-    final res = (await client.get(Uri.parse(baseUrl))).body;
-
-    List<MManga> animeList = [];
-    final urls = xpath(
-      res,
-      '//*[@class="block_area block_area_home"]/div[@class="tab-content"]/div[contains(@class,"block_area-content block_area-list")]/div[@class="film_list-wrap"]/div[@class="flw-item"]/div[@class="film-poster"]/a/@href',
-    );
-    final names = xpath(
-      res,
-      '//*[@class="block_area block_area_home"]/div[@class="tab-content"]/div[contains(@class,"block_area-content block_area-list")]/div[@class="film_list-wrap"]/div[@class="flw-item"]/div[@class="film-poster"]/a/@title',
-    );
-    final images = xpath(
-      res,
-      '//*[@class="block_area block_area_home"]/div[@class="tab-content"]/div[contains(@class,"block_area-content block_area-list")]/div[@class="film_list-wrap"]/div[@class="flw-item"]/div[@class="film-poster"]/img/@data-src',
-    );
-
-    for (var i = 0; i < names.length; i++) {
-      MManga anime = MManga();
-      anime.name = names[i];
-      anime.imageUrl = images[i];
-      anime.link = urls[i];
-      animeList.add(anime);
-    }
-
+    final resLatest =
+        (await client.get(Uri.parse("$baseUrl/www1-sub/dernier-episodes/"))).body;
+    final resSub = (await client.get(Uri.parse("$baseUrl/anime-vostfr/"))).body;
+    final resDub = (await client.get(Uri.parse("$baseUrl/anime-vf/"))).body;
+    List<MManga> animeList = dedupe([
+      ...parseListing(resLatest),
+      ...parseListing(resSub),
+      ...parseListing(resDub),
+    ]);
     return MPages(animeList, false);
   }
 
+  // =============================== Search ===============================
   @override
   Future<MPages> search(String query, int page, FilterList filterList) async {
-    query = query.trim().replaceAll(" ", "+");
-    final res =
-        (await client.get(
-          Uri.parse(
-            "$baseUrl/index.php?do=search&subaction=search&story=$query",
-          ),
-        )).body;
-
-    List<MManga> animeList = [];
-    final urls = xpath(res, '//*[@class="film-poster"]/a/@href');
-    final names = xpath(res, '//*[@class="film-poster"]/a/@title');
-    final images = xpath(res, '//*[@class="film-poster"]/img/@data-src');
-
-    for (var i = 0; i < names.length; i++) {
+    final queryTrimmed = query.trim();
+    if (queryTrimmed.startsWith("https://")) {
       MManga anime = MManga();
-      anime.name = names[i];
-      anime.imageUrl = images[i];
-      anime.link = urls[i];
-      animeList.add(anime);
+      anime.name = nameFromAnimeUrl(queryTrimmed);
+      anime.link = queryTrimmed.endsWith("/")
+          ? queryTrimmed.substring(0, queryTrimmed.length - 1)
+          : queryTrimmed;
+      return MPages([anime], false);
     }
 
-    return MPages(animeList.reversed.toList(), false);
+    final urls = await sitemapAnimeUrls();
+    final tokens = queryTrimmed
+        .toLowerCase()
+        .split(RegExp(r"\s+"))
+        .where((t) => t.isNotEmpty)
+        .toList();
+    List<MManga> animeList = [];
+    final seen = <String>{};
+    for (var url in urls) {
+      final clean = animeUrlFromLink(url);
+      if (!seen.add(clean)) continue;
+      final slug = clean.split("/").last.toLowerCase();
+      var match = true;
+      for (var token in tokens) {
+        if (!slug.contains(token)) {
+          match = false;
+          break;
+        }
+      }
+      if (!match) continue;
+      MManga anime = MManga();
+      anime.name = nameFromAnimeUrl(clean);
+      anime.link = clean;
+      animeList.add(anime);
+    }
+    return MPages(animeList, false);
   }
 
+  // =============================== Detail ===============================
   @override
   Future<MManga> getDetail(String url) async {
     final statusList = [
       {"En cours": 0, "Terminé": 1},
     ];
 
-    final res = (await client.get(Uri.parse(url))).body;
-    var anime = MManga();
+    final animeUrl = url.endsWith("/") ? url.substring(0, url.length - 1) : url;
+    final res = (await client.get(Uri.parse(animeUrl))).body;
     final doc = parseHtml(res);
-    anime.description =
-        xpath(res, '//*[@class="film-description m-hide"]/text()').first;
-
-    final status =
-        xpath(
-          res,
-          '//*[@class="item item-title" and contains(text(),"Status:")]/span[2]/text()',
-        ).first;
-    anime.status = parseStatus(status, statusList);
+    var anime = MManga();
+    anime.name = doc.selectFirst("h1.film-name")?.text ?? "";
+    anime.description = doc.selectFirst("div.film-description .text")?.text ?? "";
+    final img = doc.selectFirst("div.anisc-poster img")?.attr("src") ?? "";
+    anime.imageUrl = img.startsWith("http") ? img : "";
+    final status = doc
+            .xpathFirst(
+              '//*[contains(@class,"item item-title") and contains(.,"Status:")]/span[@class="name"]/text()',
+            )
+            ?.trim() ??
+        "";
+    if (status.isNotEmpty) anime.status = parseStatus(status, statusList);
     anime.genre = xpath(
       res,
-      '//*[@class="item item-list" and contains(text(),"Genres:")]/a/text()',
+      '//*[contains(@class,"item item-list") and contains(.,"Genres:")]/a/text()',
     );
-    anime.author = doc.xpathFirst(
-      '//*[@class="item item-title" and contains(text(),"Studio:")]/span[2]/text()',
-    );
-    final episodesLength = int.parse(
-      substringBefore(
-        doc.xpathFirst('//*[@class="film-stats"]/span[7]/text()'),
-        "/",
-      ).replaceAll("Ep", ""),
-    );
-    List<MChapter>? episodesList = [];
 
-    for (var i = 0; i < episodesLength; i++) {
+    List<MChapter>? episodesList = [];
+    final prefix = animeUrl.split("/").last;
+    final episodeUrls = <String>[];
+    try {
+      final urls = await sitemapUrls();
+      for (var u in urls) {
+        if (u.contains("/episode-") && u.contains("/$prefix/")) {
+          episodeUrls.add(animeUrlFromLink(u));
+        }
+      }
+    } catch (_) {}
+    if (episodeUrls.isEmpty) {
+      final watch = doc.selectFirst("a.btn-play")?.getHref ?? "";
+      if (watch.isNotEmpty && watch.contains("/episode-")) {
+        episodeUrls.add(animeUrlFromLink(watch));
+      }
+    }
+    episodeUrls.sort((a, b) {
+      final na = int.tryParse(
+            a.split("/episode-").last.replaceAll("/", ""),
+          ) ??
+          0;
+      final nb = int.tryParse(
+            b.split("/episode-").last.replaceAll("/", ""),
+          ) ??
+          0;
+      return nb.compareTo(na);
+    });
+    for (var epUrl in episodeUrls) {
+      final num = epUrl.split("/episode-").last.replaceAll("/", "");
       var episode = MChapter();
-      episode.name = "Episode ${i + 1}";
-      episode.url = url.replaceAll('.html', '/episode-${i + 1}.html');
+      episode.name = "Episode $num";
+      episode.url = epUrl;
       episodesList.add(episode);
     }
-    anime.chapters = episodesList.reversed.toList();
+    anime.chapters = episodesList;
     return anime;
   }
 
+  // =============================== Videos ===============================
   @override
   Future<List<MVideo>> getVideoList(String url) async {
-    final resHtml = (await client.get(Uri.parse(url))).body;
-    final id = url.split('/')[4].split('-')[0];
-    final resServer =
-        (await client.get(
-          Uri.parse("$baseUrl/engine/ajax/full-story.php?newsId=$id"),
-        )).body;
-
-    final serverIds = xpath(
-      resHtml,
-      '//*[@class="ps__-list"]/div/@data-server-id',
-    );
-    final serverNames = xpath(resHtml, '//*[@class="ps__-list"]/div/a/text()');
-    List<String> serverUrls = [];
-    for (var id in serverIds) {
-      final serversUrls =
-          xpath(
-            jsonDecode(resServer)["html"],
-            '//*[@id="content_player_${id}"]/text()',
-          ).first;
-      serverUrls.add(serversUrls);
-    }
-    List<MVideo> videos = [];
-    for (var i = 0; i < serverNames.length; i++) {
-      final name = serverNames[i];
-      final url = serverUrls[i];
-      List<MVideo> a = [];
-      if (name.contains("Sendvid")) {
-        a = await sendVidExtractorr(
-          url.replaceAll("https:////", "https://"),
-          "",
-        );
-      } else if (name.contains("Sibnet")) {
-        a = await sibnetExtractor(
-          "https://video.sibnet.ru/shell.php?videoid=$url",
-        );
-      } else if (name.contains("Mytv")) {
-        a = await myTvExtractor("https://www.myvi.tv/embed/$url");
-      } else if (name.contains("Fmoon")) {
-        a = await filemoonExtractor(url, "", "");
-      }
-      videos.addAll(a);
-    }
-
-    return videos;
-  }
-
-  Future<List<MVideo>> sendVidExtractorr(String url, String prefix) async {
     final res = (await client.get(Uri.parse(url))).body;
-    final document = parseHtml(res);
-    final masterUrl = document.selectFirst("source#video_source")?.attr("src");
-    if (masterUrl == null) return [];
-    final masterHeaders = {
-      "Accept": "*/*",
-      "Host": Uri.parse(masterUrl).host,
-      "Origin": "https://${Uri.parse(url).host}",
-      "Referer": "https://${Uri.parse(url).host}/",
-    };
+    final doc = parseHtml(res);
+    final servers = doc.select("div.server-item");
     List<MVideo> videos = [];
-    if (masterUrl.contains(".m3u8")) {
-      final masterPlaylistRes = (await client.get(Uri.parse(masterUrl))).body;
-
-      for (var it in substringAfter(
-        masterPlaylistRes,
-        "#EXT-X-STREAM-INF:",
-      ).split("#EXT-X-STREAM-INF:")) {
-        final quality =
-            "${substringBefore(substringBefore(substringAfter(substringAfter(it, "RESOLUTION="), "x"), ","), "\n")}p";
-
-        String videoUrl = substringBefore(substringAfter(it, "\n"), "\n");
-
-        if (!videoUrl.startsWith("http")) {
-          videoUrl =
-              "${masterUrl.split("/").sublist(0, masterUrl.split("/").length - 1).join("/")}/$videoUrl";
+    for (var server in servers) {
+      final name = server.text.trim();
+      final embed = server.attr("data-embed");
+      if (embed.isEmpty || !embed.startsWith("http")) continue;
+      final host = Uri.parse(embed).host;
+      List<MVideo> extracted = [];
+      try {
+        if (host.contains("filemoon")) {
+          extracted = await filemoonExtractor(embed, name, "");
+        } else if (host.contains("sendvid")) {
+          extracted = await sendVidExtractor(embed, null, name);
+        } else if (host.contains("sibnet")) {
+          extracted = await sibnetExtractor(embed, name);
+        } else if (host.contains("mp4upload")) {
+          extracted = await mp4UploadExtractor(embed, null, name, "");
+        } else if (host.contains("dood")) {
+          extracted = await doodExtractor(embed, name);
+        } else if (host.contains("streamtape")) {
+          extracted = await streamTapeExtractor(embed, name);
+        } else if (host.contains("voe")) {
+          extracted = await voeExtractor(embed, name);
+        } else {
+          extracted = await streamWishExtractor(embed, name);
         }
-        final videoHeaders = {
-          "Accept": "*/*",
-          "Host": Uri.parse(videoUrl).host,
-          "Origin": "https://${Uri.parse(url).host}",
-          "Referer": "https://${Uri.parse(url).host}/",
-        };
-        var video = MVideo();
-        video
-          ..url = videoUrl
-          ..originalUrl = videoUrl
-          ..quality = prefix + "Sendvid:$quality"
-          ..headers = videoHeaders;
-        videos.add(video);
-      }
-    } else {
-      var video = MVideo();
-      video
-        ..url = masterUrl
-        ..originalUrl = masterUrl
-        ..quality = prefix + "Sendvid:default"
-        ..headers = masterHeaders;
-      videos.add(video);
+      } catch (_) {}
+      videos.addAll(extracted);
     }
-
     return videos;
   }
 }
