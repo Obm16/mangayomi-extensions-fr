@@ -30,7 +30,8 @@ class AnimeSama extends MProvider {
         final href = el.getHref ?? "";
         if (href.isEmpty) continue;
         final animeUrl = href.startsWith("http") ? href : "$baseUrl$href";
-        seasons.addAll(await fetchAnimeSeasons(animeUrl, ""));
+        final resSeasons = await fetchAnimeSeasons(animeUrl, "");
+        seasons.addAll(resSeasons);
       }
     }
     return MPages(seasons, page < chunks.length);
@@ -116,7 +117,8 @@ class AnimeSama extends MProvider {
       String href = el.getHref ?? "";
       if (href.isEmpty) continue;
       if (!href.startsWith("http")) href = "$baseUrl$href";
-      seasons.addAll(await fetchAnimeSeasons(href, ""));
+      final resSeasons = await fetchAnimeSeasons(href, "");
+      seasons.addAll(resSeasons);
     }
     final lastPageEl = doc.selectFirst("#list_pagination a:last-child");
     final lastPage = (lastPageEl?.text ?? "").trim();
@@ -251,19 +253,26 @@ class AnimeSama extends MProvider {
           if (item is String && item.isNotEmpty) {
             try {
               if (item.contains("sibnet.ru")) {
-                videos.addAll(await sibnetExtractor(item, ""));
+                final extracted = await sibnetExtractor(item, "");
+                videos.addAll(extracted);
               } else if (item.contains("vidmoly") || item.contains("ansembed")) {
-                videos.addAll(await vidmolyExtractor(item, ""));
+                final extracted = await vidmolyExtractor(item, "");
+                videos.addAll(extracted);
               } else if (item.contains("sendvid.com")) {
-                videos.addAll(await sendvidExtractor(item, ""));
+                final extracted = await sendvidExtractor(item, "");
+                videos.addAll(extracted);
               } else if (vidhideDomains.any((d) => item.toLowerCase().contains(d))) {
-                videos.addAll(await vidhideExtractor(item, "VidHide"));
+                final extracted = await vidhideExtractor(item, "VidHide");
+                videos.addAll(extracted);
               } else if (item.contains("vk.com") || item.contains("vkvideo")) {
-                videos.addAll(await vkExtractor(item, ""));
+                final extracted = await vkExtractor(item, "");
+                videos.addAll(extracted);
               } else if (item.contains("uqload")) {
-                videos.addAll(await uqloadExtractor(item, ""));
+                final extracted = await uqloadExtractor(item, "");
+                videos.addAll(extracted);
               } else if (item.contains("yourupload")) {
-                videos.addAll(await youruploadExtractor(item, ""));
+                final extracted = await youruploadExtractor(item, "");
+                videos.addAll(extracted);
               } else if (item.contains(".mp4")) {
                 var v = MVideo();
                 v..url = item
