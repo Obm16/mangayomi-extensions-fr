@@ -482,12 +482,10 @@ class AnimeSama extends MProvider {
     final animeName = (doc.selectFirst("h1")?.text ?? "").trim();
 
     final statusText = (doc.selectFirst(".info-lbl:contains(État) + .info-val")?.text ?? "").trim();
-    int animeStatus = 5;
-    if (statusText.toLowerCase().contains("en cours")) {
-      animeStatus = 0;
-    } else if (statusText.toLowerCase().contains("terminé")) {
-      animeStatus = 1;
-    }
+    final statusList = [
+      {"En cours": 0, "Terminé": 1},
+    ];
+    final animeStatus = parseStatus(statusText, statusList);
 
     final thumbnailUrl = doc.getElementById("coverOeuvre")?.attr("abs:src") ??
         doc.selectFirst("meta[property=og:image]")?.attr("content") ??
