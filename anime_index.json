@@ -2,7 +2,7 @@
   {
     "name": "AnimeSama",
     "id": 210000001,
-    "baseUrl": "https://animes-sama.fr",
+    "baseUrl": "https://anime-sama.to",
     "lang": "fr",
     "typeSource": "single",
     "iconUrl": "",
@@ -12,14 +12,14 @@
     "hasCloudflare": false,
     "sourceCodeUrl": "https://raw.githubusercontent.com/Obm16/mangayomi-extensions-fr/main/dart/anime/src/fr/animesama/animesama.dart",
     "apiUrl": "",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "isManga": false,
     "itemType": 1,
     "isFullData": false,
     "appMinVerReq": "0.5.0",
     "additionalParams": "",
     "sourceCodeLanguage": 0,
-    "notes": "Porté depuis m2k3a/mangayomi-extensions (Apache-2.0), domaine à jour animes-sama.fr"
+    "notes": "Porté depuis m2k3a/mangayomi-extensions (Apache-2.0), domaine officiel anime-sama.to"
   },
   {
     "name": "AnimesUltra",
@@ -78,7 +78,7 @@
     "hasCloudflare": false,
     "sourceCodeUrl": "https://raw.githubusercontent.com/Obm16/mangayomi-extensions-fr/main/dart/anime/src/fr/voiranime/voiranime.dart",
     "apiUrl": "",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "isManga": false,
     "itemType": 1,
     "isFullData": false,
@@ -100,7 +100,7 @@
     "hasCloudflare": true,
     "sourceCodeUrl": "https://raw.githubusercontent.com/Obm16/mangayomi-extensions-fr/main/dart/anime/src/fr/tenshitv/tenshitv.dart",
     "apiUrl": "",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "isManga": false,
     "itemType": 1,
     "isFullData": false,

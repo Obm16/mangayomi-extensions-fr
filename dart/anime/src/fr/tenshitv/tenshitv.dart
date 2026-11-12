@@ -16,7 +16,8 @@ class TenshiTV extends MProvider {
 
   @override
   String get baseUrl {
-    String pref = getPreferenceValue(source.id, "overrideBaseUrl");
+    String pref = getPreferenceValue(source.id, "overrideBaseUrl") ?? "";
+    pref = pref.trim();
     if (pref.isEmpty) pref = "https://tenshitv.com";
     if (pref.endsWith("/")) pref = pref.substring(0, pref.length - 1);
     return pref;
