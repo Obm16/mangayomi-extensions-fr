@@ -12,14 +12,14 @@
     "hasCloudflare": false,
     "sourceCodeUrl": "https://raw.githubusercontent.com/Obm16/mangayomi-extensions-fr/main/dart/anime/src/fr/animesama/animesama.dart",
     "apiUrl": "",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "isManga": false,
     "itemType": 1,
     "isFullData": false,
     "appMinVerReq": "0.5.0",
     "additionalParams": "",
     "sourceCodeLanguage": 0,
-    "notes": "Porté depuis m2k3a/mangayomi-extensions (Apache-2.0), domaine officiel anime-sama.to"
+    "notes": "Porté depuis m2k3a/mangayomi-extensions (Apache-2.0), domaine officiel anime-sama.to — correctif cast Status"
   },
   {
     "name": "AnimesUltra",
