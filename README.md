@@ -6,7 +6,7 @@
 
 | Source | URL (à jour) | Statut |
 |---|---|---|
-| **AnimeSama** | https://animes-sama.fr | Portée depuis `m2k3a/mangayomi-extensions` (Apache-2.0) — VOSTFR/VF/multi-voix, complète |
+| **AnimeSama** | https://anime-sama.to | Portée depuis `m2k3a/mangayomi-extensions` (Apache-2.0) — VOSTFR/VF/multi-voix, complète |
 | **AnimesUltra** | https://animesultra.org | Portée depuis `m2k3a/mangayomi-extensions` (Apache-2.0) |
 | **KissKH FR** | https://kisskh.do | Variante FR de la source KissKH (API JSON, sous-titres FR intégrés) |
 | **Voiranime** | https://voir-anime.to | **Nouvelle** — thème Madara, hébergeurs VOE/Filemoon/Streamtape/myTV |

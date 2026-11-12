@@ -10,8 +10,9 @@ class AnimeSama extends MProvider {
 
   @override
   String get baseUrl {
-    String pref = getPreferenceValue(source.id, "base_url_pref");
-    if (pref.isEmpty) pref = "https://animes-sama.fr";
+    String pref = getPreferenceValue(source.id, "base_url_pref") ?? "";
+    if (pref.isEmpty) pref = "https://anime-sama.to";
+    pref = pref.trim();
     if (pref.endsWith("/")) pref = pref.substring(0, pref.length - 1);
     return pref;
   }
@@ -26,7 +27,8 @@ class AnimeSama extends MProvider {
     List<MManga> seasons = [];
     if (page > 0 && page <= chunks.length) {
       for (var el in chunks[page - 1]) {
-        final href = el.getHref;
+        final href = el.getHref ?? "";
+        if (href.isEmpty) continue;
         final animeUrl = href.startsWith("http") ? href : "$baseUrl$href";
         seasons.addAll(await fetchAnimeSeasons(animeUrl, ""));
       }
@@ -44,8 +46,8 @@ class AnimeSama extends MProvider {
     final seen = <String>{};
     for (var el in elements) {
       final a = el.selectFirst("a");
-      if (a == null) continue;
-      String href = a.getHref;
+      String href = a?.getHref ?? "";
+      if (href.isEmpty) continue;
       if (!href.startsWith("http")) href = "$baseUrl$href";
       final uri = Uri.parse(href);
       final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
@@ -111,12 +113,13 @@ class AnimeSama extends MProvider {
     final elements = doc.select("#list_catalog > div a");
     List<MManga> seasons = [];
     for (var el in elements) {
-      String href = el.getHref;
+      String href = el.getHref ?? "";
+      if (href.isEmpty) continue;
       if (!href.startsWith("http")) href = "$baseUrl$href";
       seasons.addAll(await fetchAnimeSeasons(href, ""));
     }
     final lastPageEl = doc.selectFirst("#list_pagination a:last-child");
-    final lastPage = lastPageEl?.text.trim() ?? "";
+    final lastPage = (lastPageEl?.text ?? "").trim();
     final hasNextPage = lastPage.isNotEmpty && lastPage != "$page";
     return MPages(seasons, hasNextPage);
   }
@@ -476,9 +479,9 @@ class AnimeSama extends MProvider {
     }
     final res = (await client.get(Uri.parse(cleanAnimeUrl))).body;
     final doc = parseHtml(res);
-    final animeName = doc.selectFirst("h1")?.text.trim() ?? "";
+    final animeName = (doc.selectFirst("h1")?.text ?? "").trim();
 
-    final statusText = doc.selectFirst(".info-lbl:contains(État) + .info-val")?.text.trim() ?? "";
+    final statusText = (doc.selectFirst(".info-lbl:contains(État) + .info-val")?.text ?? "").trim();
     int animeStatus = 5;
     if (statusText.toLowerCase().contains("en cours")) {
       animeStatus = 0;
@@ -491,8 +494,8 @@ class AnimeSama extends MProvider {
         doc.selectFirst("meta[itemprop=image]")?.attr("content") ??
         "";
 
-    final descriptionText = doc.selectFirst("#synopsisText")?.text.trim() ?? "";
-    final genres = doc.select(".genre-pill").map((g) => g.text.trim()).where((g) => g.isNotEmpty).toList();
+    final descriptionText = (doc.selectFirst("#synopsisText")?.text ?? "").trim();
+    final genres = doc.select(".genre-pill").map((g) => (g.text ?? "").trim()).where((g) => g.isNotEmpty).toList();
 
     final scripts = doc.select("script").map((e) => e.text).join("\n");
     final uncommented = scripts.replaceAll(RegExp(r"/\*.*?\*/", dotAll: true), "");
@@ -570,9 +573,9 @@ class AnimeSama extends MProvider {
   }
 
   List<MVideo> sortVideos(List<MVideo> videos, int sourceId) {
-    String quality = getPreferenceValue(sourceId, "preferred_quality");
-    String voice = getPreferenceValue(sourceId, "voices_preference");
-    String player = getPreferenceValue(sourceId, "player_preference");
+    String quality = getPreferenceValue(sourceId, "preferred_quality") ?? "";
+    String voice = getPreferenceValue(sourceId, "voices_preference") ?? "";
+    String player = getPreferenceValue(sourceId, "player_preference") ?? "";
 
     videos.sort((MVideo a, MVideo b) {
       int scoreA = 0;
@@ -607,11 +610,11 @@ class AnimeSama extends MProvider {
       EditTextPreference(
         key: "base_url_pref",
         title: "URL de base",
-        summary: "Pour changer le domaine de l'extension (par ex: https://animes-sama.fr, https://anime-sama.pw)",
-        value: "https://animes-sama.fr",
+        summary: "Pour changer le domaine de l'extension (par ex: https://anime-sama.to, https://anime-sama.pw)",
+        value: "https://anime-sama.to",
         dialogTitle: "Remplacer BaseUrl",
         dialogMessage: "",
-        text: "https://animes-sama.fr",
+        text: "https://anime-sama.to",
       ),
       ListPreference(
         key: "preferred_quality",

@@ -10,7 +10,8 @@ class VoirAnime extends MProvider {
 
   @override
   String get baseUrl {
-    String pref = getPreferenceValue(source.id, "overrideBaseUrl");
+    String pref = getPreferenceValue(source.id, "overrideBaseUrl") ?? "";
+    pref = pref.trim();
     if (pref.isEmpty) pref = "https://voir-anime.to";
     if (pref.endsWith("/")) pref = pref.substring(0, pref.length - 1);
     return pref;
@@ -213,11 +214,13 @@ class VoirAnime extends MProvider {
   }
 
   List<String> preferenceHosterSelection(int sourceId) {
-    return getPreferenceValue(sourceId, "hoster_selection_");
+    final value = getPreferenceValue(sourceId, "hoster_selection_");
+    if (value is List) return value.map((e) => e.toString()).toList();
+    return [];
   }
 
   List<MVideo> sortVideos(List<MVideo> videos, int sourceId) {
-    String quality = getPreferenceValue(sourceId, "preferred_quality");
+    String quality = getPreferenceValue(sourceId, "preferred_quality") ?? "";
     videos.sort((MVideo a, MVideo b) {
       int qualityMatchA = a.quality.contains(quality) ? 1 : 0;
       int qualityMatchB = b.quality.contains(quality) ? 1 : 0;
