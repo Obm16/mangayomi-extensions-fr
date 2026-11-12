@@ -190,10 +190,10 @@ class VoirAnime extends MProvider {
                 lower.contains("moon") ||
                 RegExp(r'mfw\d+').hasMatch(lower)) &&
             hosterSelection.contains("Filemoon")) {
-          a = await filemoonExtractor(embedUrl, "");
+          a = await filemoonExtractor(embedUrl, "Filemoon", "");
         } else if (lower.contains("streamtape") &&
             hosterSelection.contains("Streamtape")) {
-          a = await streamTapeExtractor(embedUrl);
+          a = await streamTapeExtractor(embedUrl, null);
         } else if ((lower.contains("myvi") || lower.contains("mytv")) &&
             hosterSelection.contains("MyTV")) {
           a = await myTvExtractor(embedUrl);
@@ -202,7 +202,7 @@ class VoirAnime extends MProvider {
           a = await sibnetExtractor(embedUrl, "");
         } else if (lower.contains("dood") &&
             hosterSelection.contains("Doodstream")) {
-          a = await doodExtractor(embedUrl);
+          a = await doodExtractor(embedUrl, null);
         } else if ((lower.contains("streamwish") ||
                 lower.contains("streamhide") ||
                 lower.contains("awish") ||

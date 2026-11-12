@@ -152,11 +152,11 @@ class TenshiTV extends MProvider {
           hosterSelection.contains("Voe")) {
         a = await voeExtractor(embedUrl, "");
       } else if (lower.contains("filemoon") || RegExp(r'mfw\d+').hasMatch(lower)) {
-        a = await filemoonExtractor(embedUrl, "");
+        a = await filemoonExtractor(embedUrl, "Filemoon", "");
       } else if (lower.contains("streamtape") && hosterSelection.contains("Streamtape")) {
-        a = await streamTapeExtractor(embedUrl);
+        a = await streamTapeExtractor(embedUrl, null);
       } else if (lower.contains("dood") && hosterSelection.contains("Doodstream")) {
-        a = await doodExtractor(embedUrl);
+        a = await doodExtractor(embedUrl, null);
       } else if (lower.contains("streamwish") && hosterSelection.contains("Streamwish")) {
         a = await streamWishExtractor(embedUrl, "StreamWish");
       } else if (lower.contains("vidmoly")) {
